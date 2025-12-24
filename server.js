@@ -13,12 +13,7 @@ const paymentRoutes = require('./src/routes/payment');
 const { connectDB } = require('./src/config/db');
 
 const app = express();
-app.use(cors({
-  origin: "https://mega-mart-zeta.vercel.app",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
-}));
+app.use(cors());
 
 app.options("*", cors());
 // Middleware
@@ -38,6 +33,13 @@ app.use('/api/payment', paymentRoutes);
 
 // Serve static client if built
 const clientBuildPath = path.join(__dirname, 'client', 'dist');
+app.use((req, res, next) => {
+  res.setHeader(
+    "Content-Security-Policy",
+    "img-src * data: blob:;"
+  );
+  next();
+});
 app.use(express.static(clientBuildPath));
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) return res.status(404).json({ message: 'API route not found' });
