@@ -18,7 +18,7 @@ const app = express();
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(cors({
-  origin:'*',
+  origin:'https://mega-mart-zeta.vercel.app',
   credentials:true
 }));
 app.use(express.json());
