@@ -13,10 +13,6 @@ const paymentRoutes = require('./src/routes/payment');
 const { connectDB } = require('./src/config/db');
 
 const app = express();
-
-// Middleware
-app.use(helmet());
-app.use(morgan('dev'));
 app.use(cors({
   origin: "https://mega-mart-zeta.vercel.app",
   credentials: true,
@@ -25,6 +21,9 @@ app.use(cors({
 }));
 
 app.options("*", cors());
+// Middleware
+app.use(helmet());
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
