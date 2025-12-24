@@ -5,24 +5,40 @@ const Order = require('../models/Order');
 
 const router = express.Router();
 
-// Initialize Razorpay with your credentials
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+const keyId = process.env.RAZORPAY_KEY_ID;
+const keySecret = process.env.RAZORPAY_KEY_SECRET;
+const razorpayEnabled = Boolean(keyId && keySecret);
+
+let razorpay = null;
+if (razorpayEnabled) {
+  razorpay = new Razorpay({
+    key_id: keyId,
+    key_secret: keySecret,
+  });
+} else {
+  console.warn(
+    '[payment] Razorpay credentials missing. Payment routes disabled until RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are configured.'
+  );
+}
 
 // Test endpoint to verify Razorpay configuration
 router.get('/test-config', (req, res) => {
   res.json({
-    key_id: process.env.RAZORPAY_KEY_ID ? 'Found' : 'Missing',
-    key_secret: process.env.RAZORPAY_KEY_SECRET ? 'Found' : 'Missing',
-    razorpay_initialized: !!razorpay
+    key_id: keyId ? 'Found' : 'Missing',
+    key_secret: keySecret ? 'Found' : 'Missing',
+    razorpay_initialized: razorpayEnabled
   });
 });
 
 // Create Razorpay order
 router.post('/create-order', protect, async (req, res) => {
   try {
+    if (!razorpayEnabled) {
+      return res.status(503).json({
+        success: false,
+        message: 'Payment service is temporarily unavailable. Please contact support.'
+      });
+    }
     console.log('=== Creating Razorpay Order ===');
     console.log('Request body:', req.body);
     console.log('Razorpay Key ID:', process.env.RAZORPAY_KEY_ID ? 'Found' : 'Missing');
@@ -211,7 +227,7 @@ router.post('/verify', protect, async (req, res) => {
 
     // verify signature: HMAC SHA256 of (razorpay_order_id + "|" + razorpay_payment_id)
     const crypto = require('crypto');
-    if (!process.env.RAZORPAY_KEY_SECRET) {
+    if (!razorpayEnabled) {
       console.error('Missing RAZORPAY_KEY_SECRET env var');
       return res.status(500).json({ success: false, message: 'Server misconfiguration' });
     }
